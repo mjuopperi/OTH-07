@@ -1,0 +1,90 @@
+<project name="Template" basedir="." default="test">
+  <description>
+    Build file for Template
+  </description>
+  <property environment="env"/>
+  <echo message="ANT_HOME is set to = ${env.ANT_HOME}"/>
+  <path id="classpath">
+    <pathelement location="lib/junit-4.12.jar"/>
+  </path>
+  
+  
+  <target name="init">
+    <!-- set properties for this build -->
+    <property name="src" location="src"/>
+    <property name="test-src" location="test"/>
+    <property name="dest" location="classes"/>
+    <property name="test-dest" location="testclasses"/>
+    <property name="reports" location="reports"/>
+    <property name="jar-file" value="template.jar"/>
+    <property name="docs-dir" location="docs"/>
+    <mkdir dir="${reports}" />
+  </target>
+
+  <target name="fetch">
+    <!-- fetch files from git -->
+    <git command="pull" dir="."/>
+  </target>
+
+  <target name="compile" depends="init">
+    <mkdir dir="${dest}" />
+    <mkdir dir="${test-dest}" />
+    <javac classpathref="classpath" includeantruntime="false" fork="yes" srcdir="${src}" destdir="${dest}"/>
+    <javac classpathref="classpath" includeantruntime="false" fork="yes" srcdir="${test-src}" classpath="${dest}" destdir="${test-dest}"/>
+  </target>    
+
+  <target name="jar" depends="compile"
+          description="compile the source" >
+    <jar destfile="${jar-file}" basedir="${dest}">
+      <manifest>
+        <attribute name="Main-Class" value="TemplateTest"/>
+      </manifest>
+    </jar>
+  </target>
+
+ <target name="test" depends="compile">
+   <junit printsummary="yes" haltonerror="false" haltonfailure="false" showoutput="yes">
+     <classpath>
+       <pathelement path="lib/junit-4.12.jar"/>
+       <pathelement path="${test-dest}"/>
+       <pathelement path="${dest}"/>
+     </classpath>
+     
+     <batchtest fork="yes" todir="${reports}">
+       <formatter type="xml"/>
+       <fileset dir="${test-dest}">
+         <include name="**/*.class"/>
+       </fileset>
+     </batchtest>
+   </junit>
+ </target>    
+ 
+  <target name="docs" depends="compile">
+    <javadoc packagenames="src" sourcepath="${src}" destdir="${docs-dir}">
+      <fileset dir="${src}"> <include name="**" />
+      </fileset>
+    </javadoc>
+  </target>
+
+  <target name="clean" depends="init">
+    <delete dir="${dest}"/>
+    <delete dir="${test-dest}"/>
+    <delete dir="${docs-dir}"/>
+    <delete dir="${reports}" />
+    <delete file="MANIFEST.MF"/>
+    <delete file="${jar-file}"/>
+  </target>
+
+  <macrodef name = "git">
+    <attribute name = "command" />
+    <attribute name = "dir" default = "" />
+    <element name = "args" optional = "true" />
+    <sequential>
+      <echo message = "git @{command}" />
+    <exec executable = "git" dir = "@{dir}">
+      <arg value = "@{command}" />
+      <args/>
+    </exec>
+    </sequential>
+  </macrodef>
+</project>
